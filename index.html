@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Little Liam's Big Backyard Adventure - Flipbook</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive;
+            background: #2c3e50;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .viewer-container {
+            width: 100%;
+            max-width: 1400px;
+            background: #34495e;
+            border-radius: 10px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .book-wrapper {
+            perspective: 2000px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 700px;
+            position: relative;
+        }
+
+        .book {
+            display: flex;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s ease;
+        }
+
+        .page-spread {
+            display: none;
+            width: 1200px;
+            height: 650px;
+            background: white;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            border-radius: 5px;
+        }
+
+        .page-spread.active {
+            display: flex;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .single-page {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border-right: 1px solid #ddd;
+        }
+
+        .single-page:last-child {
+            border-right: none;
+        }
+
+        .page-image-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .page-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .page-text {
+            background: white;
+            padding: 25px;
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #333;
+            text-align: center;
+            border-top: 3px solid #667eea;
+            min-height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .title-spread {
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            padding: 60px;
+        }
+
+        .title-content h1 {
+            font-size: 3.5em;
+            margin-bottom: 30px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+        }
+
+        .title-content p {
+            font-size: 1.6em;
+            margin-top: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            padding: 25px;
+            background: #34495e;
+            border-radius: 10px;
+        }
+
+        .nav-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: 'Comic Sans MS', cursive;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-3px);
+            box-shadow: 0 7px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .nav-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            opacity: 0.5;
+        }
+
+        .page-indicator {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .page-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #7f8c8d;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .dot.active {
+            background: #667eea;
+            transform: scale(1.3);
+        }
+
+        .dot:hover {
+            background: #9b59b6;
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 15px;
+            font-size: 0.9em;
+            color: #95a5a6;
+        }
+
+        .single-page:first-child .page-number {
+            right: 15px;
+        }
+
+        .single-page:last-child .page-number {
+            left: 15px;
+        }
+
+        .zoom-controls {
+            display: flex;
+            gap: 10px;
+            background: rgba(52, 73, 94, 0.9);
+            padding: 10px;
+            border-radius: 50px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+        }
+
+        .zoom-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .zoom-btn:hover {
+            background: #5568d3;
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 1300px) {
+            .page-spread {
+                width: 1000px;
+                height: 550px;
+            }
+            
+            .title-content h1 {
+                font-size: 2.5em;
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .page-spread {
+                width: 800px;
+                height: 450px;
+            }
+            
+            .page-text {
+                font-size: 0.95em;
+                padding: 20px;
+                min-height: 120px;
+            }
+            
+            .title-content h1 {
+                font-size: 2em;
+            }
+            
+            .title-content p {
+                font-size: 1.2em;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .page-spread {
+                width: 95vw;
+                height: auto;
+                flex-direction: column;
+            }
+            
+            .single-page {
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+            }
+            
+            .single-page:last-child {
+                border-bottom: none;
+            }
+            
+            .nav-btn {
+                padding: 12px 25px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="viewer-container">
+        <div class="zoom-controls">
+            <button class="zoom-btn" onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
+        </div>
+        
+        <div class="book-wrapper">
+            <div class="book">
+                <!-- Spread 0: Title Page -->
+                <div class="page-spread active" data-spread="0">
+                    <div class="single-page title-spread">
+                        <div class="title-content">
+                            <h1>✨ Little Liam's Big Backyard Adventure ✨</h1>
+                            <p>A story about imagination, friendship, and the adventures waiting in your own backyard</p>
+                            <p style="margin-top: 40px; font-size: 1.3em;">Written for all the little explorers out there 🌟</p>
+                        </div>
+                    </div>
+                    <div class="single-page" style="background: linear-gradient(135deg, #19547b 0%, #667eea 100%);"></div>
+                </div>
+
+                <!-- Spread 1: Pages 1-2 -->
+                <div class="page-spread" data-spread="1">
+                    <div class="single-page">
+                        <div class="page-image-container">
+                            <img src="woke up.png" alt="Page 1" class="page-image">
+                        </div>
+                        <div class="page-text">
+                            <div>
+                                Little Liam woke up with the sun so bright.<br>
+                                "What adventure will I have today?" he said with delight.<br>
+                                He grabbed his backpack and his teddy bear, Buddy too.<br>
+                                "Let's explore the backyard! There's so much to do!"
+                            </div>
+                        </div>
+                        <div class="page-number">1</div>
+                    </div>
+                    <div class="single-page">
+                        <div class="page-image-container">
+                            <img src="jungle.png" alt="Page 2" class="page-image">
+                        </div>
+                        <div class="page-text">
+                            <div>
+                                The grass was tall, like a jungle so green.<br>
+                                Captain Whiskers the cat said, "Follow me to be seen!"<br>
+                                They walked through flowers, past colors so bright.<br>
+                                A butterfly joined them, oh what a sight!
+                            </div>
+                        </div>
+                        <div class="page-number">2</div>
+                    </div>
+                </div>
+
+                <!-- Spread 2: Pages 3-4 -->
+                <div class="page-spread" data-spread="2">
+                    <div class="single-page">
+                        <div class="page-image-container">
+                            <img src="cloud.png" alt="Page 3" class="page-image">
+                        </div>
+                        <div class="page-text">
+                            <div>
+                                They came to a puddle, wide and blue.<br>
+                                Pip the Cloud giggled, "I'll carry you!"<br>
+                                They floated across on the cloud so light.<br>
+                                The puddle-ocean sparkled, shining bright!
+                            </div>
+                        </div>
+                        <div class="page-number">3</div>
+                    </div>
+                    <div class="single-page">
+                        <div class="page-image-container">
+                            <img src="squirrel.png" alt="Page 4" class="page-image">
+                        </div>
+                        <div class="page-text">
+                            <div>
+                                Two squirrels were gathering acorns with care.<br>
+                                "We need help," said Zippy. "Will you share?"<br>
+                                Little Liam smiled and joined in the fun.<br>
+                                Working together, the job was soon done!
+                            </div>
+                        </div>
+                        <div class="page-number">4</div>
+                    </div>
+                </div>
+
+                <!-- Spread 3: Pages 5-6 -->
+                <div class="page-spread" data-spread="3">
+                    <div class="single-page">
+                        <div class="page-image-container">
+                            <img src="tree.png" alt="Page 5" class="page-image">
+                        </div>
+                        <div class="page-text">
+                            <div>
+                                A big tree stood tall, like a mountain so high.<br>
+                                "Let's climb to the top and touch the sky!"<br>
+                                Step by step, up they went with care.<br>
+                                At the top sat Mr. Tortoise, wise and fair.
+                            </div>
+                        </div>
+                        <div class="page-number">5</div>
+                    </div>
+                    <div class="single-page">
+                        <div class="page-image-container">
+                            <img src="fairy.png" alt="Page 6" class="page-image">
+                        </div>
+                        <div class="page-text">
+                            <div>
+                                "Being brave means trying something new.<br>
+                                Take a deep breath, you know what to do!"<br>
+                                The sun was setting, painting the sky.<br>
+                                Luna the fairy lit their way home, flying by.
+                            </div>
+                        </div>
+                        <div class="page-number">6</div>
+                    </div>
+                </div>
+
+                <!-- Spread 4: Pages 7-8 -->
+                <div class="page-spread" data-spread="4">
+                    <div class="single-page">
+                        <div class="page-image-container">
+                            <img src="door.png" alt="Page 7" class="page-image">
+                        </div>
+                        <div class="page-text">
+                            <div>
+                                Back at the door, Liam gave hugs all around.<br>
+                                "Thank you for the best adventure I've found!"<br>
+                                His friends all waved from the garden so green.<br>
+                                "See you tomorrow!" called the whole team.
+                            </div>
+                        </div>
+                        <div class="page-number">7</div>
+                    </div>
+                    <div class="single-page">
+                        <div class="page-image-container">
+                            <img src="tell.png" alt="Page 8" class="page-image">
+                        </div>
+                        <div class="page-text">
+                            <div>
+                                At dinner, Mom asked with care,<br>
+                                "What did you do today, my little bear?"<br>
+                                "I crossed an ocean and climbed up high!<br>
+                                I made new friends under the sky!"
+                            </div>
+                        </div>
+                        <div class="page-number">8</div>
+                    </div>
+                </div>
+
+                <!-- Spread 5: Page 9 & Back Cover -->
+                <div class="page-spread" data-spread="5">
+                    <div class="single-page">
+                        <div class="page-image-container">
+                            <img src="sleep.png" alt="Page 9" class="page-image">
+                        </div>
+                        <div class="page-text">
+                            <div>
+                                Now tucked in bed, with Buddy held near,<br>
+                                Little Liam smiled, feeling no fear.<br>
+                                "Tomorrow I'll have adventures so new.<br>
+                                But tonight I'll dream of the ones I just knew!"<br><br>
+                                <strong>✨ THE END ✨</strong>
+                            </div>
+                        </div>
+                        <div class="page-number">9</div>
+                    </div>
+                    <div class="single-page" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+                        <div style="color: white; text-align: center; font-size: 1.5em;">
+                            <p>✨</p>
+                            <p style="margin-top: 20px;">Thank you for reading!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="nav-btn" id="prevBtn" onclick="previousSpread()">
+            ← Previous
+        </button>
+        
+        <div class="page-indicator">
+            <div class="page-dots" id="pageDots"></div>
+        </div>
+        
+        <button class="nav-btn" id="nextBtn" onclick="nextSpread()">
+            Next →
+        </button>
+    </div>
+
+    <script>
+        let currentSpread = 0;
+        const totalSpreads = 5;
+
+        function initializeDots() {
+            const dotsContainer = document.getElementById('pageDots');
+            dotsContainer.innerHTML = '';
+            for (let i = 0; i <= totalSpreads; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                if (i === 0) dot.classList.add('active');
+                dot.onclick = () => goToSpread(i);
+                dotsContainer.appendChild(dot);
+            }
+        }
+
+        function updateDisplay() {
+            const spreads = document.querySelectorAll('.page-spread');
+            const dots = document.querySelectorAll('.dot');
+            
+            spreads.forEach((spread, index) => {
+                spread.classList.toggle('active', index === currentSpread);
+            });
+            
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSpread);
+            });
+            
+            document.getElementById('prevBtn').disabled = currentSpread === 0;
+            document.getElementById('nextBtn').disabled = currentSpread === totalSpreads;
+        }
+
+        function nextSpread() {
+            if (currentSpread < totalSpreads) {
+                currentSpread++;
+                updateDisplay();
+            }
+        }
+
+        function previousSpread() {
+            if (currentSpread > 0) {
+                currentSpread--;
+                updateDisplay();
+            }
+        }
+
+        function goToSpread(index) {
+            currentSpread = index;
+            updateDisplay();
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') previousSpread();
+            if (e.key === 'ArrowRight') nextSpread();
+            if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+        });
+
+        // Swipe support for touch devices
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            if (touchEndX < touchStartX - 50) nextSpread();
+            if (touchEndX > touchStartX + 50) previousSpread();
+        }
+
+        // Initialize
+        initializeDots();
+        updateDisplay();
+    </script>
+</body>
+</html>
